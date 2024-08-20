@@ -78,3 +78,81 @@ func GetCarByID(id int64) (*Car, error) {
 
 	return &car, nil
 }
+
+func GetCarsByBrand(brand string) ([]*Car, error) {
+	query := `SELECT id, brand, model, engine, gearbox FROM cars WHERE brand = ?`
+	rows, err := db.DB.Query(query, brand)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var cars []*Car
+	for rows.Next() {
+		var car Car
+		if err := rows.Scan(&car.ID, &car.Brand, &car.Model, &car.Engine, &car.Gearbox); err != nil {
+			return nil, fmt.Errorf("failed to scan car: %w", err)
+		}
+		cars = append(cars, &car)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	if len(cars) == 0 {
+		return nil, fmt.Errorf("no cars found with brand %s", brand)
+	}
+
+	return cars, nil
+}
+
+func (car *Car) Update() error {
+	query := `UPDATE cars 
+	SET brand = ?, model = ?, engine = ?, gearbox = ?
+	WHERE id = ?`
+
+	// Prepare the statement
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	// Execute the statement
+	_, err = stmt.Exec(car.Brand, car.Model, car.Engine, car.Gearbox, car.ID)
+	if err != nil {
+		return fmt.Errorf("failed to execute statement: %w", err)
+	}
+
+	return nil
+}
+
+func DeleteCarById(id int64) error {
+	query := `DELETE FROM cars WHERE id = ?`
+
+	// Prepare the statement
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	// Execute the statement
+	result, err := stmt.Exec(id)
+	if err != nil {
+		return fmt.Errorf("failed to execute statement: %w", err)
+	}
+
+	// Check the number of affected rows
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve affected rows: %w", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no car found with ID %d", id)
+	}
+
+	return nil
+}
