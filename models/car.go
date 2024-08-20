@@ -1,6 +1,8 @@
 package models
 
 import (
+	"database/sql"
+	"fmt"
 	"gooooo/db"
 	_ "log"
 )
@@ -59,4 +61,20 @@ func GetAllCars() ([]Car, error) {
 	}
 
 	return cars, nil
+}
+
+func GetCarByID(id int64) (*Car, error) {
+	query := `SELECT id, brand, model, engine, gearbox FROM cars WHERE id = ?`
+	row := db.DB.QueryRow(query, id)
+
+	var car Car
+	err := row.Scan(&car.ID, &car.Brand, &car.Model, &car.Engine, &car.Gearbox)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no car found with ID %d", id)
+		}
+		return nil, fmt.Errorf("failed to scan car: %w", err)
+	}
+
+	return &car, nil
 }
