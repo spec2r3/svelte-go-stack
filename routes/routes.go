@@ -10,5 +10,8 @@ func RegisterRoutes(server *gin.Engine) {
 	server.GET("/car/brand/:brand", getCarByBrand) //GET car by its brand
 	server.PUT("/car/:id", updateCar)              //PUT request to update car
 	server.DELETE("/car/:id", deleteCar)           //DELETE a car
+	server.POST("/car_id", forceCar)               //POST car with ID, Payload needs to have
+	server.POST("/signup", signUp)                 //POST to create user with email,password,alias
+	server.DELETE("/signup/:id", deleteUser)       //DELETE user with internal ID
 
 }

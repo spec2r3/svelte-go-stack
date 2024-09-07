@@ -60,11 +60,13 @@ func getCarByBrand(c *gin.Context) {
 	// Fetch car details by brand
 	cars, err := models.GetCarsByBrand(brand)
 	if err != nil {
+
+		if len(cars) == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"message": "No cars found with the given brand"})
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Could not retrieve cars"})
-		return
-	}
-	if len(cars) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "No cars found with the given brand"})
 		return
 	}
 
@@ -122,4 +124,29 @@ func deleteCar(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Car deleted successfully"})
+}
+
+func forceCar(context *gin.Context) {
+
+	var car models.Car
+	err := context.ShouldBindJSON(&car)
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Invalid format"})
+		return
+	}
+
+	if car.ID == 0 {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "ID is required"})
+		return
+	}
+
+	err = car.Force()
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not save car"})
+		return
+	}
+
+	context.JSON(http.StatusCreated, car)
+
 }

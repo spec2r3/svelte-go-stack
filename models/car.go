@@ -156,3 +156,26 @@ func DeleteCarById(id int64) error {
 
 	return nil
 }
+
+// Save method to insert the Car instance into the database
+func (c *Car) Force() error {
+	query := `INSERT INTO cars (id, brand, model, engine, gearbox) VALUES (?, ?, ?, ?, ?)`
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(c.ID, c.Brand, c.Model, c.Engine, c.Gearbox)
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	c.ID = id
+
+	return nil
+}
