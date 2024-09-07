@@ -1,5 +1,10 @@
 {
     "cSpell.ignoreWords": [
+        "AUTOINCREMENT",
+        "hashedPassword",
         "signup"
+    ],
+    "cSpell.words": [
+        "hashedPassword"
     ]
 }

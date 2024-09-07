@@ -2,6 +2,7 @@ package routes
 
 import (
 	"gooooo/models"
+	"gooooo/utils"
 	"net/http"
 	"strconv"
 
@@ -19,7 +20,7 @@ func signUp(context *gin.Context) {
 	}
 
 	// Generate the API key
-	apiKey, err := models.GenerateKey()
+	apiKey, err := utils.GenerateKey()
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate API key"})
 		return

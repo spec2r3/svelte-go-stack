@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"gooooo/db"
+	"gooooo/utils"
 	_ "log"
 )
 
@@ -24,7 +25,16 @@ func (u *User) Save() error {
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(u.Email, u.Password, u.APIKey, u.Alias)
+	hashedPassword, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+	hashedKey, err := utils.HashKey(u.APIKey)
+	if err != nil {
+		return err
+	}
+
+	result, err := stmt.Exec(u.Email, hashedPassword, hashedKey, u.Alias)
 	if err != nil {
 		return err
 	}
