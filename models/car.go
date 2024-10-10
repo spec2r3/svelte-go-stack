@@ -15,7 +15,6 @@ type Car struct {
 	Gearbox string `binding:"required"`
 }
 
-// Save method to insert the Car instance into the database
 func (c *Car) Save() error {
 	query := `INSERT INTO cars (brand, model, engine, gearbox) VALUES (?, ?, ?, ?)`
 	stmt, err := db.DB.Prepare(query)
@@ -38,12 +37,20 @@ func (c *Car) Save() error {
 	return nil
 }
 
-// GetAllCars returns all saved car instances from the database
-func GetAllCars() ([]Car, error) {
-	query := `SELECT id, brand, model, engine, gearbox FROM cars`
-	rows, err := db.DB.Query(query)
+func GetAllCars(page, pageSize int) ([]Car, int, error) {
+	offset := (page - 1) * pageSize
+
+	var carCount int
+	countQuery := `SELECT COUNT(*) FROM cars`
+	err := db.DB.QueryRow(countQuery).Scan(&carCount)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	query := `SELECT id, brand, model, engine, gearbox FROM cars LIMIT ? OFFSET ?`
+	rows, err := db.DB.Query(query, pageSize, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -51,16 +58,16 @@ func GetAllCars() ([]Car, error) {
 	for rows.Next() {
 		var car Car
 		if err := rows.Scan(&car.ID, &car.Brand, &car.Model, &car.Engine, &car.Gearbox); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		cars = append(cars, car)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return cars, nil
+	return cars, carCount, nil
 }
 
 func GetCarByID(id int64) (*Car, error) {
@@ -79,12 +86,21 @@ func GetCarByID(id int64) (*Car, error) {
 	return &car, nil
 }
 
-func GetCarsByBrand(brand string) ([]*Car, error) {
-	query := `SELECT id, brand, model, engine, gearbox FROM cars WHERE brand = ?`
-	rows, err := db.DB.Query(query, brand)
+func GetCarsByBrand(brand string, page, pageSize int) ([]*Car, int, error) {
 
+	offset := (page - 1) * pageSize
+
+	countQuery := `SELECT COUNT(*) FROM cars WHERE brand = ?`
+	var carCount int
+	err := db.DB.QueryRow(countQuery, brand).Scan(&carCount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
+		return nil, 0, fmt.Errorf("failed to execute count query: %w", err)
+	}
+
+	query := `SELECT id, brand, model, engine, gearbox FROM cars WHERE brand = ? LIMIT ? OFFSET ?`
+	rows, err := db.DB.Query(query, brand, pageSize, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
@@ -92,20 +108,16 @@ func GetCarsByBrand(brand string) ([]*Car, error) {
 	for rows.Next() {
 		var car Car
 		if err := rows.Scan(&car.ID, &car.Brand, &car.Model, &car.Engine, &car.Gearbox); err != nil {
-			return nil, fmt.Errorf("failed to scan car: %w", err)
+			return nil, 0, fmt.Errorf("failed to scan car: %w", err)
 		}
 		cars = append(cars, &car)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows error: %w", err)
+		return nil, 0, fmt.Errorf("rows error: %w", err)
 	}
 
-	if len(cars) == 0 {
-		return nil, fmt.Errorf("no cars found with brand %s", brand)
-	}
-
-	return cars, nil
+	return cars, carCount, nil
 }
 
 func (car *Car) Update() error {
@@ -178,4 +190,14 @@ func (c *Car) Force() error {
 	c.ID = id
 
 	return nil
+}
+
+func CarCountChecker(brand, model string) (bool, error) {
+	query := `SELECT COUNT(*) FROM cars WHERE brand = ? AND model = ?`
+	var count int
+	err := db.DB.QueryRow(query, brand, model).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute query: %w", err)
+	}
+	return count > 0, nil
 }
