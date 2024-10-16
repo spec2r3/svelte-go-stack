@@ -15,7 +15,7 @@ func main() {
 
 	routes.RegisterRoutes(server)
 
-	server.Run(":8081") //localhost:8080
+	server.Run(":8081")
 }
 
 func enableCORS(router *gin.Engine) {

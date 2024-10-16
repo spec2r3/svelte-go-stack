@@ -120,20 +120,18 @@ func GetCarsByBrand(brand string, page, pageSize int) ([]*Car, int, error) {
 	return cars, carCount, nil
 }
 
-func (car *Car) Update() error {
+func (c *Car) Update() error {
 	query := `UPDATE cars 
 	SET brand = ?, model = ?, engine = ?, gearbox = ?
 	WHERE id = ?`
 
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(query)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
-	// Execute the statement
-	_, err = stmt.Exec(car.Brand, car.Model, car.Engine, car.Gearbox, car.ID)
+	_, err = stmt.Exec(c.Brand, c.Model, c.Engine, c.Gearbox, c.ID)
 	if err != nil {
 		return fmt.Errorf("failed to execute statement: %w", err)
 	}
@@ -144,20 +142,17 @@ func (car *Car) Update() error {
 func DeleteCarById(id int64) error {
 	query := `DELETE FROM cars WHERE id = ?`
 
-	// Prepare the statement
 	stmt, err := db.DB.Prepare(query)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
-	// Execute the statement
 	result, err := stmt.Exec(id)
 	if err != nil {
 		return fmt.Errorf("failed to execute statement: %w", err)
 	}
 
-	// Check the number of affected rows
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve affected rows: %w", err)
@@ -169,7 +164,6 @@ func DeleteCarById(id int64) error {
 	return nil
 }
 
-// Save method to insert the Car instance into the database
 func (c *Car) Force() error {
 	query := `INSERT INTO cars (id, brand, model, engine, gearbox) VALUES (?, ?, ?, ?, ?)`
 	stmt, err := db.DB.Prepare(query)

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
 	"gooooo/db"
 	"gooooo/utils"
@@ -124,4 +125,71 @@ func GetAllUsers(page, pageSize int) ([]User, int, error) {
 	}
 
 	return users, userCount, nil
+}
+
+func GetUserByID(id int64) (*User, error) {
+	query := `SELECT id, email, alias FROM users WHERE id = ?`
+	row := db.DB.QueryRow(query, id)
+
+	var user User
+
+	err := row.Scan(&user.ID, &user.Email, &user.Alias, &user.APIKey)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no user found with ID %d", id)
+		}
+		return nil, fmt.Errorf("failed to scan user: %w", err)
+	}
+
+	return &user, nil
+}
+
+func (u *User) Update() error {
+	query := `UPDATE users 
+	SET email = ?, password = ?, api_key = ?,alias =?
+	WHERE id = ?`
+
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	hashedPassword, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+	hashedKey, err := utils.HashKey(u.APIKey)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(u.Email, u.Password, u.Admin)
+	if err != nil {
+		return fmt.Errorf("failed to execute statement: %w", err)
+	}
+
+	return nil
+}
+
+func (u *User) Force() error {
+	query := `INSERT INTO cars (id, brand, model, engine, gearbox) VALUES (?, ?, ?, ?, ?)`
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(c.ID, c.Brand, c.Model, c.Engine, c.Gearbox)
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	c.ID = id
+
+	return nil
 }

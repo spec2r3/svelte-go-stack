@@ -136,3 +136,61 @@ func getUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func getUserById(c *gin.Context) {
+	userId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user ID"})
+		return
+	}
+
+	user, err := models.GetUserByID(userId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Could not retrieve the user"})
+		return
+	}
+	if user == nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+		return
+	}
+
+	response := gin.H{
+		"ID":    user.ID,
+		"Email": user.Email,
+		"Alias": user.Alias,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func updateUser(c *gin.Context) {
+	userId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse user id."})
+		return
+	}
+
+	_, err = models.GetUserByID(userId)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch the car."})
+		return
+	}
+
+	var updatedUser models.Car
+	err = c.ShouldBindJSON(&updatedUser)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid format"})
+		return
+	}
+
+	updatedCar.ID = carId
+	err = updatedCar.Update()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Could not update car"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Car updated successfully"})
+
+}

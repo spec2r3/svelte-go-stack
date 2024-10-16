@@ -7,7 +7,7 @@ import (
 
 // Function to generate a random 16-character hexadecimal API key
 func GenerateKey() (string, error) {
-	bytes := make([]byte, 8) // 8 bytes * 2 hex digits per byte = 16 hex characters
+	bytes := make([]byte, 8)
 	_, err := rand.Read(bytes)
 	if err != nil {
 		return "", err

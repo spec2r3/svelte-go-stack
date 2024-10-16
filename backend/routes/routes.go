@@ -14,9 +14,8 @@ func RegisterRoutes(server *gin.Engine) {
 	server.POST("/signup", signUp)                 //POST to create user with email,password,alias - use for frontend only
 	server.DELETE("/signup/:id", deleteUser)       //DELETE user with internal ID - Admin only
 	server.GET("/users", getUser)                  //GET user - Admin only
-	server.GET("/users/:id")
-	server.PUT("/users/:id")
-	server.POST("/users_id")
-	//server.POST("/signin", signIn)                 //POST to sign in using credentials - use for frontend only
+	server.GET("/users/:id", getUserById)          //GET user with id
+	server.PUT("/users/:id", updateUser)           //PUT request to update user
+	server.POST("/users_id", forceUser)            //POST overwrite user - Admin only
 
 }
